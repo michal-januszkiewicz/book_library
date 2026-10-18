@@ -54,6 +54,9 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
+  # Log the email payload. Swap this for SMTP when real delivery is needed.
+  config.action_mailer.delivery_method = :logger
+
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 

@@ -1,10 +1,28 @@
 class Borrowing < ApplicationRecord
   LOAN_PERIOD = 30.days
+  BEFORE_DUE_REMINDER_DAYS = 3
 
   belongs_to :book
   belongs_to :reader
 
   scope :open, -> { where(returned_at: nil) }
+
+  scope :needs_reminder_before_due_date, -> {
+    today = Time.zone.today
+    last_day = today + BEFORE_DUE_REMINDER_DAYS
+
+    open
+      .where(reminder_before_due_sent_at: nil)
+      .where(due_at: (today + 1).beginning_of_day..last_day.end_of_day)
+  }
+
+  scope :needs_reminder_on_due_date, -> {
+    today = Time.zone.today.to_date
+
+    open
+      .where(reminder_on_due_sent_at: nil)
+      .where(due_at: ..today.end_of_day)
+  }
 
   validates :borrowed_at, presence: true
   validates :due_at, presence: true
