@@ -1,0 +1,23 @@
+# Specify base image — match .ruby-version
+FROM ruby:4.0.7
+
+WORKDIR /rails
+
+# Install gems first so dependency layers cache independently of app code
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# Add application code
+COPY . .
+
+# Set up env
+ENV RAILS_ENV=development
+ENV RAILS_LOG_TO_STDOUT=true
+
+ENTRYPOINT ["./bin/docker-entrypoint.dev"]
+
+# Expose port
+EXPOSE 3000
+
+# Run server when container starts
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
