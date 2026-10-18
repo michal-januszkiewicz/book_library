@@ -43,7 +43,19 @@ RSpec.describe "Books", type: :request do
           "serial_number" => "123456",
           "title" => "Dune",
           "author" => "Frank Herbert",
-          "status" => "borrowed"
+          "status" => "borrowed",
+          "borrowings" => [
+            {
+              "borrowed_at" => borrowing.borrowed_at.as_json,
+              "due_at" => borrowing.due_at.as_json,
+              "returned_at" => borrowing.returned_at.as_json,
+              "reader" => {
+                "library_card_number" => borrowing.reader.library_card_number,
+                "name" => borrowing.reader.name,
+                "email" => borrowing.reader.email
+              }
+            }
+          ]
         )
       end
     end
