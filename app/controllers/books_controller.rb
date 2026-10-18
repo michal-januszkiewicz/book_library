@@ -24,9 +24,17 @@ class BooksController < ApplicationController
   def update
     case params.require(:status)
     when "borrowed"
-      borrow_book
+      if @book.borrow_book(params[:library_card_number])
+        render json: BookSerializer.one(@book.reload)
+      else
+        render_errors(@book.errors)
+      end
     when "available"
-      return_book
+      if @book.return_book
+        render json: BookSerializer.one(@book.reload)
+      else
+        render_errors(@book.errors)
+      end
     else
       render_errors({ status: [ "must be borrowed or available" ] })
     end
@@ -48,43 +56,5 @@ class BooksController < ApplicationController
 
   def book_params
     params.expect(book: %i[serial_number title author])
-  end
-
-  def borrow_book
-    card_number = params[:library_card_number]
-    if card_number.blank?
-      render_errors({ library_card_number: [ "can't be blank" ] })
-      return
-    end
-
-    reader = Reader.find_by(library_card_number: card_number)
-    if reader.nil?
-      render_errors({ library_card_number: [ "does not match a reader" ] })
-      return
-    end
-
-    borrowing = @book.borrowings.build(reader:, borrowed_at: Time.current)
-
-    if borrowing.save
-      render json: BookSerializer.one(@book.reload)
-    else
-      render_errors(borrowing.errors)
-    end
-  rescue ActiveRecord::RecordNotUnique
-    render_errors({ book: [ "is already borrowed" ] })
-  end
-
-  def return_book
-    borrowing = @book.current_borrowing
-    if borrowing.nil?
-      render_errors({ status: [ "is already available" ] })
-      return
-    end
-
-    if borrowing.update(returned_at: Time.current)
-      render json: BookSerializer.one(@book.reload)
-    else
-      render_errors(borrowing.errors)
-    end
   end
 end
