@@ -1,20 +1,20 @@
 require "rails_helper"
 
-RSpec.describe "Readers", type: :request do
-  describe "GET /readers" do
+RSpec.describe Api::V1::ReadersController, type: :request do
+  describe "GET /api/v1/readers" do
     let!(:jim) { create(:reader, name: "Jim Halpert", library_card_number: "000001", email: "jim@example.com") }
     let!(:michael) { create(:reader, name: "Michael Scott", library_card_number: "000002", email: "michael@example.com") }
 
     it "returns readers ordered by name" do
-      get "/readers"
+      get "/api/v1/readers"
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.pluck("name")).to match_array([ jim.name, michael.name ])
     end
   end
 
-  describe "POST /readers" do
-    subject(:send_request) { post "/readers", params: { reader: reader_params }, as: :json }
+  describe "POST /api/v1/readers" do
+    subject(:send_request) { post "/api/v1/readers", params: { reader: reader_params }, as: :json }
 
     context "with valid params" do
       let(:reader_params) do

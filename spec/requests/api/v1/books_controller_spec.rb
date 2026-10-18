@@ -1,20 +1,20 @@
 require "rails_helper"
 
-RSpec.describe "Books", type: :request do
-  describe "GET /books" do
+RSpec.describe Api::V1::BooksController, type: :request do
+  describe "GET /api/v1/books" do
     let!(:hyperion) { create(:book, title: "Hyperion", author: "Dan Simmons", serial_number: "000001") }
     let!(:dune) { create(:book, title: "Dune", author: "Frank Herbert", serial_number: "000002") }
 
     it "returns books ordered by title" do
-      get "/books"
+      get "/api/v1/books"
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.pluck("title")).to match_array([ hyperion.title, dune.title ])
     end
   end
 
-  describe "GET /books/:serial_number" do
-    subject(:send_request) { get "/books/#{book.serial_number}" }
+  describe "GET /api/v1/books/:serial_number" do
+    subject(:send_request) { get "/api/v1/books/#{book.serial_number}" }
 
     let!(:book) { create(:book, serial_number: "123456", title: "Dune", author: "Frank Herbert") }
 
@@ -61,8 +61,8 @@ RSpec.describe "Books", type: :request do
     end
   end
 
-  describe "POST /books" do
-    subject(:send_request) { post "/books", params: { book: book_params }, as: :json }
+  describe "POST /api/v1/books" do
+    subject(:send_request) { post "/api/v1/books", params: { book: book_params }, as: :json }
 
     context "with valid params" do
       let(:book_params) { { serial_number: "123456", title: "Dune", author: "Frank Herbert" } }
@@ -92,8 +92,8 @@ RSpec.describe "Books", type: :request do
     end
   end
 
-  describe "PATCH /books/:serial_number" do
-    subject(:send_request) { patch "/books/#{book.serial_number}", params:, as: :json }
+  describe "PATCH /api/v1/books/:serial_number" do
+    subject(:send_request) { patch "/api/v1/books/#{book.serial_number}", params:, as: :json }
 
     let(:book) { create(:book, serial_number: "123456") }
 
@@ -122,11 +122,11 @@ RSpec.describe "Books", type: :request do
     end
   end
 
-  describe "DELETE /books/:serial_number" do
+  describe "DELETE /api/v1/books/:serial_number" do
     let!(:book) { create(:book, serial_number: "123456") }
 
     it "deletes the book" do
-      delete "/books/#{book.serial_number}"
+      delete "/api/v1/books/#{book.serial_number}"
 
       expect(response).to have_http_status(:no_content)
       expect(Book.exists?(serial_number: book.serial_number)).to be(false)
