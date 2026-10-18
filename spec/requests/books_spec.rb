@@ -2,14 +2,14 @@ require "rails_helper"
 
 RSpec.describe "Books", type: :request do
   describe "GET /books" do
-    it "returns books ordered by title" do
-      create(:book, title: "Dune", author: "Frank Herbert", serial_number: "000002")
-      create(:book, title: "Hyperion", author: "Dan Simmons", serial_number: "000001")
+    let!(:hyperion) { create(:book, title: "Hyperion", author: "Dan Simmons", serial_number: "000001") }
+    let!(:dune) { create(:book, title: "Dune", author: "Frank Herbert", serial_number: "000002") }
 
+    it "returns books ordered by title" do
       get "/books"
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.pluck("title")).to match_array([ "Hyperion", "Dune" ])
+      expect(response.parsed_body.pluck("title")).to match_array([ hyperion.title, dune.title ])
     end
   end
 
@@ -62,61 +62,74 @@ RSpec.describe "Books", type: :request do
   end
 
   describe "POST /books" do
-    it "creates a book" do
-      post "/books", params: {
-        book: { serial_number: "123456", title: "Dune", author: "Frank Herbert" }
-      }, as: :json
+    subject(:send_request) { post "/books", params: { book: book_params }, as: :json }
 
-      expect(response).to have_http_status(:created)
-      expect(response.parsed_body).to include(
-        "serial_number" => "123456",
-        "title" => "Dune",
-        "author" => "Frank Herbert",
-        "status" => "available"
-      )
+    context "with valid params" do
+      let(:book_params) { { serial_number: "123456", title: "Dune", author: "Frank Herbert" } }
+
+      it "creates a book" do
+        send_request
+
+        expect(response).to have_http_status(:created)
+        expect(response.parsed_body).to include(
+          "serial_number" => "123456",
+          "title" => "Dune",
+          "author" => "Frank Herbert",
+          "status" => "available"
+        )
+      end
     end
 
-    it "returns errors when the book is invalid" do
-      post "/books", params: { book: { title: "" } }, as: :json
+    context "when not valid" do
+      let(:book_params) { { title: "" } }
 
-      expect(response).to have_http_status(422)
-      expect(response.parsed_body["errors"]).to be_present
+      it "returns errors" do
+        send_request
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body["errors"]).to be_present
+      end
     end
   end
 
   describe "PATCH /books/:serial_number" do
-    it "borrows a book" do
-      create(:book, serial_number: "123456")
-      reader = create(:reader, library_card_number: "654321")
+    subject(:send_request) { patch "/books/#{book.serial_number}", params:, as: :json }
 
-      patch "/books/123456", params: {
-        status: "borrowed",
-        library_card_number: reader.library_card_number
-      }, as: :json
+    let(:book) { create(:book, serial_number: "123456") }
 
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["status"]).to eq("borrowed")
+    context "when borrowing" do
+      let(:reader) { create(:reader, library_card_number: "654321") }
+      let(:params) { { status: "borrowed", library_card_number: reader.library_card_number } }
+
+      it "borrows a book" do
+        send_request
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body["status"]).to eq("borrowed")
+      end
     end
 
-    it "returns a borrowed book" do
-      book = create(:book, serial_number: "123456")
-      create(:borrowing, book:)
+    context "when returning" do
+      let!(:borrowing) { create(:borrowing, book:) }
+      let(:params) { { status: "available" } }
 
-      patch "/books/123456", params: { status: "available" }, as: :json
+      it "returns a borrowed book" do
+        send_request
 
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["status"]).to eq("available")
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body["status"]).to eq("available")
+      end
     end
   end
 
   describe "DELETE /books/:serial_number" do
-    it "deletes the book" do
-      create(:book, serial_number: "123456")
+    let!(:book) { create(:book, serial_number: "123456") }
 
-      delete "/books/123456"
+    it "deletes the book" do
+      delete "/books/#{book.serial_number}"
 
       expect(response).to have_http_status(:no_content)
-      expect(Book.exists?(serial_number: "123456")).to be(false)
+      expect(Book.exists?(serial_number: book.serial_number)).to be(false)
     end
   end
 end
