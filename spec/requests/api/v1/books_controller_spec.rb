@@ -9,7 +9,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
       get "/api/v1/books"
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.pluck("title")).to match_array([ hyperion.title, dune.title ])
+      expect(response.parsed_body.pluck("title")).to eq([ dune.title, hyperion.title ])
     end
   end
 
@@ -92,33 +92,46 @@ RSpec.describe Api::V1::BooksController, type: :request do
     end
   end
 
-  describe "PATCH /api/v1/books/:serial_number" do
-    subject(:send_request) { patch "/api/v1/books/#{book.serial_number}", params:, as: :json }
+  describe "POST /api/v1/books/:serial_number/borrow" do
+    subject(:send_request) { post "/api/v1/books/#{book.serial_number}/borrow", params:, as: :json }
 
     let(:book) { create(:book, serial_number: "123456") }
+    let(:reader) { create(:reader, library_card_number: "654321") }
+    let(:params) { { library_card_number: reader.library_card_number } }
 
-    context "when borrowing" do
-      let(:reader) { create(:reader, library_card_number: "654321") }
-      let(:params) { { status: "borrowed", library_card_number: reader.library_card_number } }
+    it "borrows a book" do
+      send_request
 
-      it "borrows a book" do
-        send_request
-
-        expect(response).to have_http_status(:ok)
-        expect(response.parsed_body["status"]).to eq("borrowed")
-      end
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["status"]).to eq("borrowed")
     end
 
-    context "when returning" do
-      let!(:borrowing) { create(:borrowing, book:) }
-      let(:params) { { status: "available" } }
+    context "when the library card does not match a reader" do
+      let(:params) { { library_card_number: "000000" } }
 
-      it "returns a borrowed book" do
+      it "returns an error" do
         send_request
 
-        expect(response).to have_http_status(:ok)
-        expect(response.parsed_body["status"]).to eq("available")
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body["errors"]).to eq(
+          "library_card_number" => [ "does not match a reader" ]
+        )
+        expect(book.reload).to be_available
       end
+    end
+  end
+
+  describe "POST /api/v1/books/:serial_number/return" do
+    subject(:send_request) { post "/api/v1/books/#{book.serial_number}/return" }
+
+    let(:book) { create(:book, serial_number: "123456") }
+    let!(:borrowing) { create(:borrowing, book:) }
+
+    it "returns a borrowed book" do
+      send_request
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["status"]).to eq("available")
     end
   end
 

@@ -1,16 +1,20 @@
 class BookSerializer
   class << self
     def one(book)
-      summary(book).merge(borrowings: borrowings_for(book))
+      book_json(book)
+    end
+
+    def one_with_history(book)
+      book_json(book).merge(borrowings: borrowings_for(book))
     end
 
     def collection(books)
-      books.map { |book| summary(book) }
+      books.map { |book| book_json(book) }
     end
 
     private
 
-    def summary(book)
+    def book_json(book)
       {
         serial_number: book.serial_number,
         title: book.title,
@@ -20,7 +24,7 @@ class BookSerializer
     end
 
     def borrowings_for(book)
-      book.borrowings.includes(:reader).order(:borrowed_at).map { |borrowing| borrowing_json(borrowing) }
+      book.borrowings.sort_by(&:borrowed_at).map { |borrowing| borrowing_json(borrowing) }
     end
 
     def borrowing_json(borrowing)

@@ -6,8 +6,7 @@ class Book < ApplicationRecord
   validates :serial_number,
             presence: true,
             uniqueness: true,
-            format: { with: /\A\d{6}\z/ }
-  validates :serial_number, length: { is: 6 }
+            format: { with: /\A\d{6}\z/, allow_blank: true, message: "must be 6 digits" }
   validates :title, presence: true, length: { maximum: 255 }
   validates :author, presence: true, length: { maximum: 255 }
 
@@ -23,19 +22,8 @@ class Book < ApplicationRecord
     borrowed? ? "borrowed" : "available"
   end
 
-  def borrow_book(library_card_number)
+  def borrow_book(reader)
     errors.clear
-
-    if library_card_number.blank?
-      errors.add(:library_card_number, "can't be blank")
-      return false
-    end
-
-    reader = Reader.find_by(library_card_number:)
-    if reader.nil?
-      errors.add(:library_card_number, "does not match a reader")
-      return false
-    end
 
     borrowing = borrowings.build(reader:, borrowed_at: Time.current)
     return true if borrowing.save

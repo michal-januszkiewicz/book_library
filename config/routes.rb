@@ -8,9 +8,14 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :books,
-                only: %i[index show create update destroy],
+                only: %i[index show create destroy],
                 param: :serial_number,
-                constraints: { serial_number: /\d{6}/ }
+                constraints: { serial_number: /\d{6}/ } do
+        member do
+          post :borrow_book, path: "borrow", as: :borrow
+          post :return_book, path: "return", as: :return
+        end
+      end
 
       resources :readers,
                 only: %i[index create],

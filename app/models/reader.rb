@@ -5,8 +5,7 @@ class Reader < ApplicationRecord
   validates :library_card_number,
             presence: true,
             uniqueness: true,
-            format: { with: /\A\d{6}\z/ }
-  validates :library_card_number, length: { is: 6 }
+            format: { with: /\A\d{6}\z/, allow_blank: true, message: "must be 6 digits" }
   validates :name, presence: true, length: { maximum: 255 }
   validates :email,
             presence: true,

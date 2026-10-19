@@ -8,7 +8,7 @@ class ReturnReminderMailer < ApplicationMailer
 
   def on_due(borrowing)
     set_borrowing(borrowing)
-    mail(to: @reader.email, subject: "Due today: please return #{@book.title}")
+    mail(to: @reader.email, subject: "The due date has passed: please return #{@book.title}")
   end
 
   private

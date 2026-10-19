@@ -37,7 +37,7 @@ RSpec.describe SendReturnRemindersJob, type: :job do
 
         mail = ActionMailer::Base.deliveries.last
         expect(mail.to).to eq([ borrowing.reader.email ])
-        expect(mail.subject).to eq("Due today: please return #{borrowing.book.title}")
+        expect(mail.subject).to eq("The due date has passed: please return #{borrowing.book.title}")
         expect(mail.body.decoded).to include(borrowing.book.serial_number, "today")
         expect(borrowing.reload.reminder_on_due_sent_at).to be_within(1.second).of(Time.current)
         expect(borrowing.reminder_before_due_sent_at).to be_nil

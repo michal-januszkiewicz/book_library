@@ -1,5 +1,5 @@
 class Borrowing < ApplicationRecord
-  LOAN_PERIOD = 30.days
+  BORROWING_PERIOD = 30.days
   BEFORE_DUE_REMINDER_DAYS = 3
 
   belongs_to :book
@@ -26,7 +26,7 @@ class Borrowing < ApplicationRecord
 
   validates :borrowed_at, presence: true
   validates :due_at, presence: true
-  validate :single_open_loan_per_book
+  validate :single_open_borrowing_per_book
   validate :returned_at_on_or_after_borrowed_at
 
   before_validation :assign_due_at, on: :create
@@ -40,10 +40,10 @@ class Borrowing < ApplicationRecord
   def assign_due_at
     return if due_at.present?
 
-    self.due_at = borrowed_at + LOAN_PERIOD
+    self.due_at = borrowed_at + BORROWING_PERIOD
   end
 
-  def single_open_loan_per_book
+  def single_open_borrowing_per_book
     return if returned_at.present?
     return unless book.borrowings.open.where.not(id: id).exists?
 

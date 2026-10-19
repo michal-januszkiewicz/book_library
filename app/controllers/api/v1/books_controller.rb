@@ -1,7 +1,7 @@
 module Api
   module V1
     class BooksController < ApplicationController
-      before_action :set_book, only: %i[show update destroy]
+      before_action :set_book, only: %i[show borrow_book return_book destroy]
 
       def index
         books = Book.includes(:current_borrowing).order(:title)
@@ -10,7 +10,8 @@ module Api
       end
 
       def show
-        render json: BookSerializer.one(@book)
+        book = Book.includes(borrowings: :reader).find(@book.id)
+        render json: BookSerializer.one_with_history(book)
       end
 
       def create
@@ -23,22 +24,22 @@ module Api
         end
       end
 
-      def update
-        case params.require(:status)
-        when "borrowed"
-          if @book.borrow_book(params[:library_card_number])
-            render json: BookSerializer.one(@book.reload)
-          else
-            render_errors(@book.errors)
-          end
-        when "available"
-          if @book.return_book
-            render json: BookSerializer.one(@book.reload)
-          else
-            render_errors(@book.errors)
-          end
+      def borrow_book
+        reader = find_reader
+        return if reader.blank?
+
+        if @book.borrow_book(reader)
+          render json: BookSerializer.one(@book.reload)
         else
-          render_errors({ status: [ "must be borrowed or available" ] })
+          render_errors(@book.errors)
+        end
+      end
+
+      def return_book
+        if @book.return_book
+          render json: BookSerializer.one(@book.reload)
+        else
+          render_errors(@book.errors)
         end
       end
 
@@ -52,8 +53,17 @@ module Api
 
       private
 
+      def find_reader
+        library_card_number = params.expect(:library_card_number)
+        reader = Reader.find_by(library_card_number:)
+        return reader if reader
+
+        render_errors({ library_card_number: [ "does not match a reader" ] })
+        nil
+      end
+
       def set_book
-        @book = Book.find_by!(serial_number: params[:serial_number])
+        @book = Book.find_by!(serial_number: params.expect(:serial_number))
       end
 
       def book_params
