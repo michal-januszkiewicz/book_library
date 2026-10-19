@@ -11,6 +11,13 @@ RSpec.describe Api::V1::ReadersController, type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.pluck("name")).to eq([ jim.name, michael.name ])
     end
+
+    it "returns the requested page" do
+      get "/api/v1/readers", params: { page: 2, per_page: 1 }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.pluck("name")).to eq([ michael.name ])
+    end
   end
 
   describe "POST /api/v1/readers" do

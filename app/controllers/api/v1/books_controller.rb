@@ -4,7 +4,9 @@ module Api
       before_action :set_book, only: %i[show borrow_book return_book destroy]
 
       def index
-        books = Book.includes(:current_borrowing).order(:title)
+        books = paginate(
+          Book.includes(:current_borrowing).order(:title)
+        )
 
         render json: BookSerializer.collection(books)
       end

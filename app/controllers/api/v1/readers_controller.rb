@@ -2,7 +2,7 @@ module Api
   module V1
     class ReadersController < ApplicationController
       def index
-        readers = Reader.order(:name)
+        readers = paginate(Reader.order(:name))
 
         render json: ReaderSerializer.collection(readers)
       end

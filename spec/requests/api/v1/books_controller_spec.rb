@@ -11,6 +11,13 @@ RSpec.describe Api::V1::BooksController, type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.pluck("title")).to eq([ dune.title, hyperion.title ])
     end
+
+    it "returns the requested page" do
+      get "/api/v1/books", params: { page: 2, per_page: 1 }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.pluck("title")).to eq([ hyperion.title ])
+    end
   end
 
   describe "GET /api/v1/books/:serial_number" do

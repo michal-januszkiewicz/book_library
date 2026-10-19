@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::API
+  include Pagination
+
   private
 
   def render_errors(errors)
